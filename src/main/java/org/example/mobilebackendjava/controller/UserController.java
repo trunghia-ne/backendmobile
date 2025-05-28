@@ -1,27 +1,32 @@
 package org.example.mobilebackendjava.controller;
 
+import org.example.mobilebackendjava.model.User;
 import org.example.mobilebackendjava.service.UserService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
-    private UserService firebaseService;
 
-    public UserController(UserService firebaseService) {
-        this.firebaseService = firebaseService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    @PostMapping("/saveUser")
-    public String saveUser(@RequestParam String id, @RequestParam String name, @RequestParam String email) {
-        firebaseService.saveUser(id, name, email);
-        return "Saved user " + name;
+    // Phương thức lấy tất cả User từ Cloude Firestore bằng id
+    @GetMapping("/getAllUsers")
+    public List<User> getAllUsers()  {
+        return userService.getAllUsers();
     }
 
+    // Phương thức lấy User từ Cloude Firestore bằng id
     @GetMapping("/getUserById")
-    public Map<String, Object> getUser(@RequestParam String id) throws Exception {
-        return firebaseService.getUserById(id);
+    public User getUserById(String id) {
+        return userService.getUserById(id);
     }
 }
