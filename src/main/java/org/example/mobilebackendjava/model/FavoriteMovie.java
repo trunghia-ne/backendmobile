@@ -7,10 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
-    private String username;
-    private String password;
-    private String email;
-    private String phone;
-    private String image;
+public class FavoriteMovie {
+    private String userId;
+    private String movieId;
+    private String title;
+    private String posterUrl;
+    private String addedDate;
+
 }
+
