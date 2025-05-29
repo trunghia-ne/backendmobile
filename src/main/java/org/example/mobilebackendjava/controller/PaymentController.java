@@ -130,17 +130,17 @@ public class PaymentController {
             try {
                 if ("00".equals(responseCode)) {
                     savePaymentToFirestore(transactionId, amountInVND, true, "VNpay", userId);
-                    redirectUrl = "http://10.0.2.2:8080/payment-success";
+                    redirectUrl = "movieapp://payment-success";
 
                 } else {
-                    redirectUrl = "http://10.0.2.2:8080/payment-failed";
+                    redirectUrl = "movieapp://payment-failed";
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                redirectUrl = "http://10.0.2.2:8080/payment-error";
+                redirectUrl = "movieapp://payment-error";
             }
         } else {
-            redirectUrl = "http://10.0.2.2:8080/payment-invalid";
+            redirectUrl = "movieapp://payment-invalid";
         }
 
         response.sendRedirect(redirectUrl);
