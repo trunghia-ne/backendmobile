@@ -53,6 +53,15 @@ public class UserService {
             throw new RuntimeException(e);
         }
     }
+    // Cập nhật thông tin User
+    public void updateUser(String id, User updatedUser) {
+        try {
+            db.collection("users").document(id).set(updatedUser).get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("Error while updating user with id " + id, e);
+        }
+    }
+
 
 }
 
