@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.List;
 
 @Configuration
 public class FirebaseConfig {
@@ -22,12 +23,15 @@ public class FirebaseConfig {
         String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
 
         if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
-            // ✅ Dùng bản base64 từ biến môi trường (Render)
+            // Dùng biến môi trường base64
             byte[] decoded = Base64.getDecoder().decode(firebaseConfigEnv);
-            ByteArrayInputStream serviceAccount = new ByteArrayInputStream(decoded);
-            options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .build();
+            try (ByteArrayInputStream serviceAccount = new ByteArrayInputStream(decoded)) {
+                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount)
+                        .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+                options = FirebaseOptions.builder()
+                        .setCredentials(credentials)
+                        .build();
+            }
         } else {
             // ✅ Nếu không có FIREBASE_CONFIG => chạy local bằng file
             InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json");
