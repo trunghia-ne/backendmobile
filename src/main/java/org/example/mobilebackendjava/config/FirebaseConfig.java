@@ -32,6 +32,8 @@ public class FirebaseConfig {
                         .setCredentials(credentials)
                         .build();
             }
+            System.out.println("FIREBASE_CONFIG length: " + (firebaseConfigEnv == null ? "null" : firebaseConfigEnv.length()));
+
         } else {
             // ✅ Nếu không có FIREBASE_CONFIG => chạy local bằng file
             InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json");
