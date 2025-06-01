@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Configuration
 public class FirebaseConfig {
@@ -18,16 +18,18 @@ public class FirebaseConfig {
     public FirebaseApp initFirebase() throws IOException {
         FirebaseOptions options;
 
+        // Cách đơn giản: Nếu có biến FIREBASE_CONFIG => dùng, còn lại thì dùng local file
         String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
 
         if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
-            // ✅ Ưu tiên chạy trên Render (đọc từ ENV)
-            ByteArrayInputStream serviceAccount = new ByteArrayInputStream(firebaseConfigEnv.getBytes(StandardCharsets.UTF_8));
+            // ✅ Dùng bản base64 từ biến môi trường (Render)
+            byte[] decoded = Base64.getDecoder().decode(firebaseConfigEnv);
+            ByteArrayInputStream serviceAccount = new ByteArrayInputStream(decoded);
             options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
         } else {
-            // ✅ Fallback local: đọc file JSON trong src/main/resources
+            // ✅ Nếu không có FIREBASE_CONFIG => chạy local bằng file
             InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json");
             options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
