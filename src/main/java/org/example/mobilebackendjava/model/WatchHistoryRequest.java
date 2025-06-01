@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WatchHistory {
+public class WatchHistoryRequest {
     private String userId;
     private String movieId;
     private String movieTitle;
     private String trailerUrl;
-    private long watchTime;
 }

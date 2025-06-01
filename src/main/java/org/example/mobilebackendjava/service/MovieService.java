@@ -1,16 +1,17 @@
 package org.example.mobilebackendjava.service;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.WriteResult;
+import com.google.firebase.cloud.FirestoreClient;
 import org.example.mobilebackendjava.model.WatchHistory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @Service
 public class MovieService {
@@ -20,37 +21,46 @@ public class MovieService {
         this.db = db;
     }
 
+    private static final String COLLECTION_NAME = "watch_history";
+
     // Lấy danh sách lịch sử xem phim của 1 user
-    public List<WatchHistory> getAllWatchHistories(String userId) {
-        List<WatchHistory> watchHistories = new ArrayList<>();
-        try{
-           ApiFuture<QuerySnapshot> future = db.collection("watchHistories")
-                   .whereEqualTo("userId",userId)
-                   .get();
-           List<QueryDocumentSnapshot> document = future.get().getDocuments();
-           for (QueryDocumentSnapshot doc : document) {
-               WatchHistory watchHistory = doc.toObject(WatchHistory.class);
-               watchHistories.add(watchHistory);
-           }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Query interrupted. Please try again!");
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Error while querying data from Firestore: " + e.getMessage());
+    public List<WatchHistory> getWatchHistory(String userId) {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        List<WatchHistory> watchHistoryList = new ArrayList<>();
+
+        try {
+            // Query the watch_history collection where userId matches
+            ApiFuture<QuerySnapshot> future = dbFirestore.collection(COLLECTION_NAME)
+                    .whereEqualTo("userId", userId)
+                    .get();
+
+            // Get the query results
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            // Convert each document to WatchHistory object
+            for (QueryDocumentSnapshot document : documents) {
+                WatchHistory history = document.toObject(WatchHistory.class);
+                watchHistoryList.add(history);
+            }
+
+            return watchHistoryList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList(); // Return empty list in case of error
         }
-        return watchHistories;
     }
 
     // Thêm 1 lịch sử xem phim
-    public void addWatchHistory(WatchHistory history) {
-        try{
-            ApiFuture<DocumentReference> future = db.collection("watchHistories").add(history);
-            future.get();
-        } catch (ExecutionException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("History adding process interrupted!");
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Error adding movie viewing history: " + e.getCause().getMessage());
+    public String saveWatchHistory(String userId, String movieId, String movieTitle, String trailerUrl) {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        WatchHistory history = new WatchHistory(userId, movieId, movieTitle, trailerUrl, System.currentTimeMillis());
+
+        ApiFuture<WriteResult> future = dbFirestore.collection(COLLECTION_NAME).document().set(history);
+        try {
+            return future.get().getUpdateTime().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
