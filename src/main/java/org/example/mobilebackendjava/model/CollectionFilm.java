@@ -1,11 +1,12 @@
 package org.example.mobilebackendjava.model;
 
 import com.google.cloud.Timestamp;
+import java.util.Date;
 
 public class CollectionFilm {
     private String id;              // document ID
     private String collection_name;
-    private Timestamp createdAt;
+    private Timestamp createdAt;         // Sửa kiểu từ Firebase Timestamp sang Date
     private String userId;
 
     public CollectionFilm() {} // Constructor rỗng bắt buộc

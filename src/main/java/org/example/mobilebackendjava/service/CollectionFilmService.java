@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class CollectionFilmService {
@@ -77,26 +79,108 @@ public class CollectionFilmService {
         return result;
     }
 
-    public String addFilmToCollection(String collectionId, Movie film) {
+    public String addFilmToCollection(String collectionId, Movie film) throws ExecutionException, InterruptedException {
+        // Tham chiếu tới collection con 'list_film' trong document 'collections/collectionId'
+        CollectionReference filmsRef = db.collection("collections")
+                .document(collectionId)
+                .collection("list_film");
+
+        // Kiểm tra slug phim đã tồn tại trong bộ sưu tập chưa
+        Query query = filmsRef.whereEqualTo("slug", film.getSlug());
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+
+        if (!querySnapshot.get().isEmpty()) {
+            return "Phim đã tồn tại trong bộ sưu tập.";
+        }
+
+        // Thêm phim mới vào bộ sưu tập
+        filmsRef.add(film);
+
+        return "Phim đã được thêm vào bộ sưu tập.";
+    }
+
+
+    public boolean isFilmInCollection(String collectionId, String slug) {
         CollectionReference filmsRef = db.collection("collections")
                 .document(collectionId)
                 .collection("list_film");
 
         try {
-            // Check nếu slug đã tồn tại
-            Query query = filmsRef.whereEqualTo("slug", film.getSlug());
+            Query query = filmsRef.whereEqualTo("slug", slug);
             ApiFuture<QuerySnapshot> querySnapshot = query.get();
 
-            if (!querySnapshot.get().isEmpty()) {
-                return "Phim đã tồn tại trong bộ sưu tập.";
-            }
-
-            // Thêm phim mới
-            filmsRef.add(film);
-            return "Phim đã được thêm vào bộ sưu tập.";
+            return !querySnapshot.get().isEmpty();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Lỗi khi thêm phim: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi kiểm tra phim trong bộ sưu tập: " + e.getMessage());
         }
     }
 
+    public boolean isFilmInAnyCollectionOfUser(String userId, String slug) {
+        try {
+            List<CollectionFilm> userCollections = getCollectionsByUserId(userId);
+            System.out.println("✅ Tổng số bộ sưu tập của user " + userId + ": " + userCollections.size());
+
+            for (CollectionFilm collection : userCollections) {
+                String collectionId = collection.getId();
+                System.out.println("🔍 Đang kiểm tra collection: " + collectionId);
+
+                // Truy vấn subcollection list_film trong từng collection
+                CollectionReference filmsRef = db.collection("collections")
+                        .document(collectionId)
+                        .collection("list_film");
+
+                Query query = filmsRef.whereEqualTo("slug", slug);
+                ApiFuture<QuerySnapshot> future = query.get(); // Bước 1: Lấy Future
+                QuerySnapshot querySnapshot = future.get(10, TimeUnit.SECONDS); // Bước 2: Chờ kết quả có timeout
+
+                List<QueryDocumentSnapshot> docs = querySnapshot.getDocuments();
+                System.out.println("🔎 Số phim có slug '" + slug + "' trong collection " + collectionId + ": " + docs.size());
+
+                if (!docs.isEmpty()) {
+                    System.out.println("✅ Tìm thấy phim có slug '" + slug + "' trong collection " + collectionId);
+                    return true;
+                }
+            }
+
+            System.out.println("❌ Không tìm thấy phim '" + slug + "' trong bất kỳ bộ sưu tập nào của user.");
+            return false;
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("💥 Lỗi khi kiểm tra phim trong bộ sưu tập: " + e.getMessage(), e);
+        } catch (TimeoutException e) {
+            throw new RuntimeException("⏰ Truy vấn bị timeout! Có thể Firestore quá tải hoặc quá nhiều dữ liệu.", e);
+        }
+    }
+
+    public boolean isCollectionExists(String collectionName, String userId) {
+        try {
+            CollectionReference collectionRef = db.collection("collections");
+            Query query = collectionRef
+                    .whereEqualTo("collection_name", collectionName)
+                    .whereEqualTo("userId", userId);
+
+            ApiFuture<QuerySnapshot> future = query.get();
+            QuerySnapshot querySnapshot = future.get();
+
+            return !querySnapshot.isEmpty();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Lỗi khi kiểm tra collection tồn tại: " + e.getMessage(), e);
+        }
+    }
+
+
+    public String addCollection(CollectionFilm collectionFilm, String userId) {
+        if (userId == null || userId.isEmpty()) {
+            throw new IllegalArgumentException("UserId không được để trống");
+        }
+        collectionFilm.setUserId(userId);  // đảm bảo gán userId
+        try {
+            ApiFuture<DocumentReference> future = db.collection("collections").add(collectionFilm);
+            String newId = future.get().getId();
+            collectionFilm.setId(newId);
+            return "Thêm bộ sưu tập thành công";
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Lỗi khi thêm bộ sưu tập: " + e.getMessage(), e);
+        }
+    }
 }
