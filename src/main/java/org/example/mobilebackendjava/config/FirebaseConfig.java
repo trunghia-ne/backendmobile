@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
@@ -17,29 +18,30 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp initFirebase() throws IOException {
+        String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
         FirebaseOptions options;
 
-        // Cách đơn giản: Nếu có biến FIREBASE_CONFIG => dùng, còn lại thì dùng local file
-        String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
-        System.out.println("FIREBASE_CONFIG length: " + (firebaseConfigEnv == null ? "null" : firebaseConfigEnv.length()));
         if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
-            // Dùng biến môi trường base64
+            // In base64 string gốc
+            System.out.println("FIREBASE_CONFIG (base64): " + firebaseConfigEnv);
+
+            // Decode base64 và in ra JSON gốc
             byte[] decoded = Base64.getDecoder().decode(firebaseConfigEnv);
+            String json = new String(decoded, StandardCharsets.UTF_8);
+            System.out.println("FIREBASE_CONFIG (decoded JSON): " + json);
             try (ByteArrayInputStream serviceAccount = new ByteArrayInputStream(decoded)) {
-                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount)
-                        .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
                 options = FirebaseOptions.builder()
                         .setCredentials(credentials)
                         .build();
             }
-
-
         } else {
-            // ✅ Nếu không có FIREBASE_CONFIG => chạy local bằng file
-            InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json");
-            options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .build();
+            try (InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json")) {
+                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+                options = FirebaseOptions.builder()
+                        .setCredentials(credentials)
+                        .build();
+            }
         }
 
         if (FirebaseApp.getApps().isEmpty()) {
