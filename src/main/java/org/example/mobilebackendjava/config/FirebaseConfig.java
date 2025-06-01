@@ -21,7 +21,7 @@ public class FirebaseConfig {
 
         // Cách đơn giản: Nếu có biến FIREBASE_CONFIG => dùng, còn lại thì dùng local file
         String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
-
+        System.out.println("FIREBASE_CONFIG length: " + (firebaseConfigEnv == null ? "null" : firebaseConfigEnv.length()));
         if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
             // Dùng biến môi trường base64
             byte[] decoded = Base64.getDecoder().decode(firebaseConfigEnv);
@@ -32,7 +32,7 @@ public class FirebaseConfig {
                         .setCredentials(credentials)
                         .build();
             }
-            System.out.println("FIREBASE_CONFIG length: " + (firebaseConfigEnv == null ? "null" : firebaseConfigEnv.length()));
+
 
         } else {
             // ✅ Nếu không có FIREBASE_CONFIG => chạy local bằng file
