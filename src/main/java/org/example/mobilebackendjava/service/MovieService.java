@@ -5,7 +5,6 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
-import org.example.mobilebackendjava.model.FavoriteMovie;
 import org.example.mobilebackendjava.model.WatchHistory;
 import org.springframework.stereotype.Service;
 
@@ -21,30 +20,6 @@ public class MovieService {
         this.db = db;
     }
 
-    // Lấy danh sách phim yêu thích của 1 user
-    public List<FavoriteMovie> getAllFavoriteMovies(String userId) {
-        List<FavoriteMovie> favoriteMovies = new ArrayList<>();
-        try {
-            ApiFuture<QuerySnapshot> future = db.collection("favoriteMovies")
-                    .whereEqualTo("userId", userId)
-                    .get();
-
-            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-
-            for (QueryDocumentSnapshot doc : documents) {
-                FavoriteMovie favoriteMovie = doc.toObject(FavoriteMovie.class);
-                favoriteMovies.add(favoriteMovie);
-            }
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Query interrupted. Please try again!");
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Error while querying data from Firestore: " + e.getMessage());
-        }
-
-        return favoriteMovies;
-    }
     // Lấy danh sách lịch sử xem phim của 1 user
     public List<WatchHistory> getAllWatchHistories(String userId) {
         List<WatchHistory> watchHistories = new ArrayList<>();
@@ -66,18 +41,6 @@ public class MovieService {
         return watchHistories;
     }
 
-    // Thêm 1 bộ phim yêu thích
-    public void addFavoriteMovie(FavoriteMovie movie) {
-        try {
-            ApiFuture<DocumentReference> future = db.collection("favoriteMovies").add(movie);
-            future.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Movie adding process interrupted!");
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Error adding movie to favorites list: " + e.getCause().getMessage());
-        }
-    }
     // Thêm 1 lịch sử xem phim
     public void addWatchHistory(WatchHistory history) {
         try{
