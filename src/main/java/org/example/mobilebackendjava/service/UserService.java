@@ -1,10 +1,12 @@
 package org.example.mobilebackendjava.service;
 
+import ch.qos.logback.classic.Logger;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QuerySnapshot;
+import io.grpc.StatusRuntimeException;
 import org.example.mobilebackendjava.model.User;
 import org.springframework.stereotype.Service;
 
@@ -35,8 +37,17 @@ public class UserService {
             }
             return result;
         } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException("Error while getting list of users from Firestore!", e);
+            Throwable cause = e.getCause();
+            if (cause instanceof StatusRuntimeException) {
+                StatusRuntimeException statusEx = (StatusRuntimeException) cause;
+                // Log thêm thông tin về status code
+                Logger logger = null;
+                logger.error("Firestore connection failed: {}", statusEx.getStatus(), statusEx);
+            }
+            throw new RuntimeException("ExecutionException while retrieving users from Firestore: " + cause, e);
         }
+
+
     }
 
     // Phương thức lấy User từ Cloude Firestore bằng id
