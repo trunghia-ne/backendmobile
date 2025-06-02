@@ -36,7 +36,7 @@ public class FirebaseConfig {
                         .build();
             }
         } else {
-            try (InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-firebase-adminsdk-fbsvc-694814d465.json")) {
+            try (InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-0f983a1aa75c.json")) {
                 GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
                 options = FirebaseOptions.builder()
                         .setCredentials(credentials)
