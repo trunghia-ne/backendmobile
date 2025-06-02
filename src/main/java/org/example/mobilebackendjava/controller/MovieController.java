@@ -3,14 +3,13 @@ package org.example.mobilebackendjava.controller;
 import org.example.mobilebackendjava.model.WatchHistory;
 import org.example.mobilebackendjava.model.WatchHistoryRequest;
 import org.example.mobilebackendjava.service.MovieService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/movie")
+@RequestMapping("/api/movies")
 public class MovieController {
     private final MovieService movieService;
 
@@ -18,27 +17,21 @@ public class MovieController {
         this.movieService = movieService;
     }
 
-    @GetMapping("/getAllWatchHistories")
-    public List<WatchHistory> getAllWatchHistories(String userId){
-        return movieService.getWatchHistory(userId);
+    // GET /api/movies/history?userId=xxxxx
+    @GetMapping("/history")
+    public List<WatchHistory> getWatchHistoryByUser(@RequestParam String userId) {
+        return movieService.getWatchHistoryByUserId(userId);
     }
 
-
-    @PostMapping("/addWatchHistory")
-    public ResponseEntity<String> saveWatchHistory(@RequestBody WatchHistoryRequest request) {
-        try {
-            String result = movieService.saveWatchHistory(
-                    request.getUserId(),
-                    request.getMovieId(),
-                    request.getMovieTitle(),
-                    request.getTrailerUrl()
-            );
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error saving watch history: " + e.getMessage());
-        }
+    // POST /api/movies/history
+    @PostMapping("/history")
+    public ResponseEntity<String> addWatchHistory(@RequestBody WatchHistoryRequest request) {
+        String result = movieService.addWatchHistory(
+                request.getUserId(),
+                request.getMovieId(),
+                request.getMovieTitle(),
+                request.getTrailerUrl()
+        );
+        return ResponseEntity.ok(result);
     }
-
-
 }

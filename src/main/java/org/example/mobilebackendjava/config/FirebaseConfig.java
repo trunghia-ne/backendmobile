@@ -8,51 +8,47 @@ import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Configuration
 public class FirebaseConfig {
 
+    private static final String FIREBASE_CONFIG_FILE = "movieapp-f0c63-0f983a1aa75c.json";
+
     @Bean
-    public FirebaseApp initFirebase() throws IOException {
-        String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
-        FirebaseOptions options;
+    public FirebaseApp initFirebase() {
+        try {
+            InputStream serviceAccount = getClass()
+                    .getClassLoader()
+                    .getResourceAsStream(FIREBASE_CONFIG_FILE);
 
-        if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
-            // In base64 string gốc
-            System.out.println("FIREBASE_CONFIG (base64): " + firebaseConfigEnv);
-
-            // Decode base64 và in ra JSON gốc
-            byte[] decoded = Base64.getDecoder().decode(firebaseConfigEnv);
-            String json = new String(decoded, StandardCharsets.UTF_8);
-            System.out.println("FIREBASE_CONFIG (decoded JSON): " + json);
-            try (ByteArrayInputStream serviceAccount = new ByteArrayInputStream(decoded)) {
-                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
-                options = FirebaseOptions.builder()
-                        .setCredentials(credentials)
-                        .build();
+            if (serviceAccount == null) {
+                throw new RuntimeException("Không tìm thấy file cấu hình Firebase: " + FIREBASE_CONFIG_FILE + " trong src/main/resources/");
             }
-        } else {
-            try (InputStream serviceAccount = new FileInputStream("src/main/resources/movieapp-f0c63-0f983a1aa75c.json")) {
-                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
-                options = FirebaseOptions.builder()
-                        .setCredentials(credentials)
-                        .build();
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
+
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp app = FirebaseApp.initializeApp(options);
+                System.out.println("FirebaseApp đã được khởi tạo: " + app.getName());
+                return app;
+            } else {
+                System.out.println("FirebaseApp đã được khởi tạo trước đó.");
+                return FirebaseApp.getInstance();
             }
-        }
 
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options);
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi đọc file credentials Firebase: " + e.getMessage(), e);
         }
-
-        return FirebaseApp.getInstance();
     }
 
     @Bean
     public Firestore getFirestore(FirebaseApp firebaseApp) {
-        return FirestoreClient.getFirestore(firebaseApp);
+        Firestore firestore = FirestoreClient.getFirestore(firebaseApp);
+        System.out.println("Firestore đã được khởi tạo.");
+        return firestore;
     }
 }
