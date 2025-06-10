@@ -1,7 +1,5 @@
 package org.example.mobilebackendjava.model;
 
-
-
 import java.util.Date;
 
 public class Comment {
@@ -13,6 +11,7 @@ public class Comment {
     private String userId;
     private String slug;        // Dùng slug thay cho movieId
     private String movieTitle;
+    private String parentId;    // Thêm trường để hỗ trợ phản hồi (replies)
 
     // Constructors
     public Comment() {}
@@ -32,6 +31,17 @@ public class Comment {
         this.userId = userId;
         this.slug = slug;
         this.movieTitle = movieTitle;
+    }
+
+    public Comment(String username, String comment, double rating, Date timestamp, String userId, String slug, String movieTitle, String parentId) {
+        this.username = username;
+        this.comment = comment;
+        this.rating = rating;
+        this.timestamp = timestamp;
+        this.userId = userId;
+        this.slug = slug;
+        this.movieTitle = movieTitle;
+        this.parentId = parentId;
     }
 
     // Getters and setters
@@ -59,10 +69,17 @@ public class Comment {
     public String getMovieTitle() { return movieTitle; }
     public void setMovieTitle(String movieTitle) { this.movieTitle = movieTitle; }
 
+    public String getParentId() { return parentId; }
+    public void setParentId(String parentId) { this.parentId = parentId; }
+
     // Generate avatar URL based on username
     public String getAvatarUrl() {
-        if (username != null && !username.isEmpty()) {
-            return "https://api.pravatar.cc/150?u=" + username.hashCode();
+        if (username != null && !username.trim().isEmpty()) {
+            try {
+                return "https://api.pravatar.cc/150?u=" + username.hashCode();
+            } catch (Exception e) {
+                return "https://api.pravatar.cc/150?u=default";
+            }
         }
         return "https://api.pravatar.cc/150?u=default";
     }
@@ -77,6 +94,7 @@ public class Comment {
                 ", userId='" + userId + '\'' +
                 ", slug='" + slug + '\'' +
                 ", movieTitle='" + movieTitle + '\'' +
+                ", parentId='" + parentId + '\'' +
                 ", timestamp=" + timestamp +
                 '}';
     }
