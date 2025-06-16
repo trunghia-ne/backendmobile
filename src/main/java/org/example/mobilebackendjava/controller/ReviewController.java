@@ -291,6 +291,7 @@ public class ReviewController {
     public ResponseEntity<List<Comment>> getAllComments() throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
         ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME)
+                .whereEqualTo("hidden", false)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get();
 
@@ -302,7 +303,7 @@ public class ReviewController {
             comments.add(comment);
         }
 
-        System.out.println("🔥 Lấy " + comments.size() + " bình luận tất cả lúc " + new Date());
+        System.out.println("🔥 Lấy " + comments.size() + " bình luận không bị ẩn lúc " + new Date());
         return ResponseEntity.ok(comments);
     }
 }
