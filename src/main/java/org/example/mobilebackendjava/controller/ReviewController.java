@@ -248,4 +248,61 @@ public class ReviewController {
         System.out.println("🔄 Cập nhật phản hồi ID: " + reviewId + " bởi user: " + updatedReply.getUserId() + " lúc " + new Date());
         return ResponseEntity.ok(updatedReply);
     }
+    // ✅ Ẩn bình luận
+    @PutMapping("/{reviewId}/hide")
+    public ResponseEntity<?> hideComment(@PathVariable String reviewId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+
+        try {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("hidden", true);
+
+            ApiFuture<WriteResult> future = db.collection(COLLECTION_NAME).document(reviewId).update(updates);
+            future.get();
+
+            System.out.println("🕶️ Đã ẩn bình luận ID: " + reviewId + " lúc " + new Date());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi ẩn bình luận: " + e.getMessage() + " lúc " + new Date());
+            return ResponseEntity.badRequest().body("Không thể ẩn bình luận");
+        }
+    }
+    // Hiện bình luận
+    @PutMapping("/{reviewId}/show")
+    public ResponseEntity<?> showComment(@PathVariable String reviewId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+
+        try {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("hidden", false);
+
+            ApiFuture<WriteResult> future = db.collection(COLLECTION_NAME).document(reviewId).update(updates);
+            future.get();
+
+            System.out.println("👁️ Đã hiện bình luận ID: " + reviewId + " lúc " + new Date());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi hiện bình luận: " + e.getMessage() + " lúc " + new Date());
+            return ResponseEntity.badRequest().body("Không thể hiện bình luận");
+        }
+    }
+    // ✅ Lấy tất cả bình luận (dành cho admin)
+    @GetMapping("/all")
+    public ResponseEntity<List<Comment>> getAllComments() throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get();
+
+        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+        List<Comment> comments = new ArrayList<>();
+        for (DocumentSnapshot doc : documents) {
+            Comment comment = doc.toObject(Comment.class);
+            comment.setId(doc.getId());
+            comments.add(comment);
+        }
+
+        System.out.println("🔥 Lấy " + comments.size() + " bình luận tất cả lúc " + new Date());
+        return ResponseEntity.ok(comments);
+    }
 }
