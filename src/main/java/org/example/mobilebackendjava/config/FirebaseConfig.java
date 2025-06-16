@@ -20,6 +20,7 @@ public class FirebaseConfig {
     public FirebaseApp initFirebase() throws IOException {
         String firebaseConfigEnv = System.getenv("FIREBASE_CONFIG");
         FirebaseOptions options;
+        String databaseUrl = "https://movieapp-f0c63.firebaseio.com";
 
         if (firebaseConfigEnv != null && !firebaseConfigEnv.isEmpty()) {
             // In base64 string gốc
@@ -33,6 +34,7 @@ public class FirebaseConfig {
                 GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
                 options = FirebaseOptions.builder()
                         .setCredentials(credentials)
+                        .setDatabaseUrl(databaseUrl)
                         .build();
             }
         } else {
@@ -40,6 +42,7 @@ public class FirebaseConfig {
                 GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
                 options = FirebaseOptions.builder()
                         .setCredentials(credentials)
+                        .setDatabaseUrl(databaseUrl)
                         .build();
             }
         }
