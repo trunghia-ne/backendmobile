@@ -95,4 +95,32 @@ public class FavoritesController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @DeleteMapping("/deleteCollection")
+    public ResponseEntity<Map<String, String>> deleteCollection(@RequestParam String collectionId) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            String result = collectionFilmService.deleteCollection(collectionId);
+            response.put("message", result);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("message", "Lỗi server: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/deleteFilmFromCollection")
+    public ResponseEntity<Map<String, String>> deleteFilmFromCollection(
+            @RequestParam String collectionId,
+            @RequestParam String slug) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            String result = collectionFilmService.deleteFilmFromCollection(collectionId, slug);
+            response.put("message", result);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("message", "Lỗi khi xóa phim: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

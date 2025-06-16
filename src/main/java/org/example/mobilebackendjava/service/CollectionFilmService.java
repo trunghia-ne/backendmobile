@@ -183,4 +183,69 @@ public class CollectionFilmService {
             throw new RuntimeException("Lỗi khi thêm bộ sưu tập: " + e.getMessage(), e);
         }
     }
+
+    public String deleteCollection(String collectionId) {
+        try {
+            System.out.println("🔥 Đang xóa collectionId: " + collectionId);
+
+            // Xoá toàn bộ phim trong subcollection list_film trước
+            CollectionReference filmsRef = db.collection("collections")
+                    .document(collectionId)
+                    .collection("list_film");
+
+            ApiFuture<QuerySnapshot> filmSnapshot = filmsRef.get();
+            List<QueryDocumentSnapshot> filmDocs = filmSnapshot.get().getDocuments();
+
+            for (QueryDocumentSnapshot doc : filmDocs) {
+                System.out.println("➡️ Xoá phim: " + doc.getId());
+                filmsRef.document(doc.getId()).delete();
+            }
+
+            // Xóa collection chính
+            ApiFuture<WriteResult> writeResult = db.collection("collections")
+                    .document(collectionId)
+                    .delete();
+
+            System.out.println("✅ Đã xóa collectionId: " + collectionId);
+            return "Xóa bộ sưu tập thành công";
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("💥 Lỗi khi xóa bộ sưu tập: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi xóa bộ sưu tập: " + e.getMessage(), e);
+        }
+    }
+
+
+    public String deleteFilmFromCollection(String collectionId, String slug) {
+        try {
+            System.out.println("🛠 Đang xóa phim với slug = " + slug + " trong collectionId = " + collectionId);
+
+            if (slug == null || slug.trim().isEmpty()) {
+                return "Slug không hợp lệ.";
+            }
+
+            CollectionReference filmsRef = db.collection("collections")
+                    .document(collectionId)
+                    .collection("list_film");
+
+            // Truy vấn phim theo slug
+            Query query = filmsRef.whereEqualTo("slug", slug);
+            ApiFuture<QuerySnapshot> querySnapshot = query.get();
+            List<QueryDocumentSnapshot> docs = querySnapshot.get().getDocuments();
+
+            if (docs.isEmpty()) {
+                System.out.println("❌ Không tìm thấy slug: " + slug);
+                return "Không tìm thấy phim trong bộ sưu tập.";
+            }
+
+            for (QueryDocumentSnapshot doc : docs) {
+                System.out.println("✅ Xóa phim documentId: " + doc.getId());
+                filmsRef.document(doc.getId()).delete(); // không cần đợi, async là đủ
+            }
+
+            return "Xóa phim khỏi bộ sưu tập thành công";
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("💥 Lỗi Firestore khi xóa phim: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi xóa phim khỏi bộ sưu tập: " + e.getMessage(), e);
+        }
+    }
 }
